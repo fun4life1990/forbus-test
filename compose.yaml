@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: "node"
+    command: >
+      bash -c "npm i
+      && rm -rf dist
+      && nest start --debug 0.0.0.0:9229 --watch --preserveWatchOutput"
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    tty: true
+    depends_on:
+      - db
+
+  db:
+    image: mongo:8
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_DATABASE}
