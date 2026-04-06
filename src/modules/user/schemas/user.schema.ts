@@ -8,7 +8,7 @@ export enum UserRole {
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, discriminatorKey: 'role' })
 export class User {
   @Prop({ required: true, unique: true })
   email: string;

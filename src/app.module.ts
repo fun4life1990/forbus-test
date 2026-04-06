@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfigFactory } from './config/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
+import { UserManagementModule } from './modules/user-management/user-management.module';
+import { SymbolManagementModule } from './modules/symbol-management/symbol-management.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { AuthModule } from './modules/auth/auth.module';
       useFactory: mongoConfigFactory,
     }),
     AuthModule,
+    UserManagementModule,
+    SymbolManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -93,6 +93,12 @@ export class TokenService {
     return this.generateJwtToken(payload, secret, expiresIn);
   }
 
+  async verifyAccessToken(token: string): Promise<JwtPayloadDto> {
+    const secret = this.configService.get<string>('JWT_SECRET_KEY');
+    if (!secret) throw new Error('JWT_SECRET_KEY is not defined');
+    return this.jwtService.verifyAsync<JwtPayloadDto>(token, { secret });
+  }
+
   async validateUser(
     username: string,
     password: string,

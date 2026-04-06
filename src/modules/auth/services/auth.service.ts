@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response, CookieOptions } from 'express';
 
-import { TokenService } from '../auth-token/services/token.service';
-import { JwtUserPayloadDto } from '../auth-token/dto/jwt-user-payload.dto';
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../../constants';
-import { LoginResponseDto } from './dto/login-response.dto';
+import { TokenService } from '../../auth-token/services/token.service';
+import { JwtUserPayloadDto } from '../../auth-token/dto/jwt-user-payload.dto';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../../../constants';
+import { LoginResponseDto } from '../dto/login-response.dto';
+import { parseTtlToMs } from '../../../utils/parse-ttl';
 
 @Injectable()
 export class AuthService {
@@ -21,21 +22,7 @@ export class AuthService {
     const { accessToken, refreshToken } =
       await this.tokenService.generateTokens(user);
 
-    const accessTtl = parseInt(
-      this.configService.get<string>('JWT_TTL') ?? '3600',
-      10,
-    );
-    const refreshTtl = parseInt(
-      this.configService.get<string>('JWT_REFRESH_TTL') ?? '604800',
-      10,
-    );
-
-    res.cookie(ACCESS_TOKEN_COOKIE, accessToken, this.cookieOptions(accessTtl));
-    res.cookie(
-      REFRESH_TOKEN_COOKIE,
-      refreshToken,
-      this.cookieOptions(refreshTtl),
-    );
+    this.setTokenCookies(res, accessToken, refreshToken);
 
     return { id: user.id, email: user.email, role: user.role };
   }
@@ -49,14 +36,17 @@ export class AuthService {
     const { accessToken, refreshToken } =
       await this.tokenService.generateTokens(user);
 
-    const accessTtl = parseInt(
-      this.configService.get<string>('JWT_TTL') ?? '3600',
-      10,
-    );
-    const refreshTtl = parseInt(
-      this.configService.get<string>('JWT_REFRESH_TTL') ?? '604800',
-      10,
-    );
+    this.setTokenCookies(res, accessToken, refreshToken);
+  }
+
+  private setTokenCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ): void {
+    const accessTtl = this.configService.get<string>('JWT_TTL') ?? '3600';
+    const refreshTtl =
+      this.configService.get<string>('JWT_REFRESH_TTL') ?? '604800';
 
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, this.cookieOptions(accessTtl));
     res.cookie(
@@ -66,12 +56,12 @@ export class AuthService {
     );
   }
 
-  private cookieOptions(maxAgeSeconds: number): CookieOptions {
+  private cookieOptions(ttl: string): CookieOptions {
     return {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: maxAgeSeconds * 1000,
+      maxAge: parseTtlToMs(ttl),
     };
   }
 }

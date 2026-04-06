@@ -15,14 +15,14 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 
-import { AuthDto } from '../auth-token/dto/auth.dto';
-import { PasswordAuthGuard } from '../auth-token/guard/password-auth.guard';
-import { JwtAuthGuard } from '../auth-token/guard/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from '../auth-token/guard/jwt-refresh-auth.guard';
-import { JwtUserPayloadDto } from '../auth-token/dto/jwt-user-payload.dto';
-import { AuthService } from './auth.service';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthDto } from '../../auth-token/dto/auth.dto';
+import { PasswordAuthGuard } from '../../auth-token/guard/password-auth.guard';
+import { JwtAuthGuard } from '../../auth-token/guard/jwt-auth.guard';
+import { JwtRefreshAuthGuard } from '../../auth-token/guard/jwt-refresh-auth.guard';
+import { JwtUserPayloadDto } from '../../auth-token/dto/jwt-user-payload.dto';
+import { AuthService } from '../services/auth.service';
+import { LoginResponseDto } from '../dto/login-response.dto';
+import { CurrentUser } from '../decorators/current-user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
