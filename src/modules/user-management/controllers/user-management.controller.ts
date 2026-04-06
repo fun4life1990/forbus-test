@@ -40,4 +40,10 @@ export class UserManagementController {
   deleteClient(@Param('clientId') clientId: string): Promise<void> {
     return this.userManagementService.deleteClient(clientId);
   }
+
+  @Post(':clientId/disconnect')
+  @HttpCode(204)
+  disconnectClient(@Param('clientId') clientId: string): void {
+    this.userManagementService.disconnectClientSocket(clientId);
+  }
 }

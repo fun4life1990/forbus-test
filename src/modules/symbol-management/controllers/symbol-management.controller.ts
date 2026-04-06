@@ -13,8 +13,6 @@ import {
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth-token/guard/jwt-auth.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { JwtUserPayloadDto } from '../../auth-token/dto/jwt-user-payload.dto';
 import { Serialize } from '../../../utils/serialize.interceptor';
 import { SymbolManagementService } from '../services/symbol-management.service';
 import { CreateSymbolDto } from '../../symbol/dto/create-symbol.dto';
@@ -34,20 +32,14 @@ export class SymbolManagementController {
 
   @Get()
   @Serialize(GetAllSymbolsResponseDto)
-  findAll(
-    @Query() filter: FilterSymbolsDto,
-    @CurrentUser() user: JwtUserPayloadDto,
-  ) {
-    return this.symbolManagementService.findAll(filter, user);
+  findAll(@Query() filter: FilterSymbolsDto) {
+    return this.symbolManagementService.findAll(filter);
   }
 
   @Get(':symbolId')
   @Serialize(SymbolResponseDto)
-  findById(
-    @Param('symbolId') symbolId: string,
-    @CurrentUser() user: JwtUserPayloadDto,
-  ) {
-    return this.symbolManagementService.findById(symbolId, user);
+  findById(@Param('symbolId') symbolId: string) {
+    return this.symbolManagementService.findById(symbolId);
   }
 
   @Post()

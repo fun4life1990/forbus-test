@@ -16,20 +16,24 @@ export class SymbolService {
     private readonly symbolModel: Model<SymbolEntity>,
   ) {}
 
-  async findAll(filter: FilterSymbolsDto): Promise<GetAllSymbolsResponseDto> {
-    const { page = 1, limit = 20, isPublished } = filter;
-    const query: Record<string, unknown> = {};
-    if (isPublished !== undefined) {
-      query.isPublished = isPublished;
+  async findAll(): Promise<SymbolDocument[]>;
+  async findAll(filter: FilterSymbolsDto): Promise<GetAllSymbolsResponseDto>;
+  async findAll(
+    filter?: FilterSymbolsDto,
+  ): Promise<SymbolDocument[] | GetAllSymbolsResponseDto> {
+    if (!filter) {
+      return this.symbolModel.find().exec();
     }
+
+    const { page = 1, limit = 20 } = filter;
 
     const [data, total] = await Promise.all([
       this.symbolModel
-        .find(query)
+        .find()
         .skip((page - 1) * limit)
         .limit(limit)
         .exec(),
-      this.symbolModel.countDocuments(query).exec(),
+      this.symbolModel.countDocuments().exec(),
     ]);
 
     return {
@@ -43,19 +47,12 @@ export class SymbolService {
     } as unknown as GetAllSymbolsResponseDto;
   }
 
-  async findById(
-    id: string,
-    filter?: { isPublished?: boolean },
-  ): Promise<SymbolDocument> {
+  async findById(id: string): Promise<SymbolDocument> {
     if (!isValidObjectId(id)) {
       throw new NotFoundError('Symbol not found');
     }
-    const query: Record<string, unknown> = { _id: id };
-    if (filter?.isPublished !== undefined) {
-      query.isPublished = filter.isPublished;
-    }
 
-    const symbol = await this.symbolModel.findOne(query).exec();
+    const symbol = await this.symbolModel.findById(id).exec();
     if (!symbol) {
       throw new NotFoundError('Symbol not found');
     }

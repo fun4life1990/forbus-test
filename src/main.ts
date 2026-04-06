@@ -12,6 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.set('query parser', 'extended');
 
+  app.enableCors({ origin: true, credentials: true });
   app.use(cookieParser());
   app.useGlobalFilters(new BaseAppExceptionFilter(new Logger()));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));

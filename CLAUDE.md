@@ -44,6 +44,38 @@ Proxies to external dependencies: third-party APIs, email delivery, sockets, fil
 
 Examples: `auth-token`, `hash`
 
+## Module File Layout
+
+Every module file (service, controller, guard, strategy, schema, decorator, listener, etc.) **must live in its own named subdirectory** inside the module folder. Nothing except the `*.module.ts` file belongs in the module root.
+
+Standard subdirectory names:
+
+| Subdirectory | Contents |
+|---|---|
+| `services/` | `@Injectable()` service classes |
+| `controllers/` | `@Controller()` classes |
+| `schemas/` | Mongoose `@Schema()` classes |
+| `dto/` | DTO classes (entity modules); further split into `dto/requests/` and `dto/responses/` for feature modules |
+| `guards/` | `@Injectable()` guard classes |
+| `strategies/` | Passport strategy classes |
+| `decorators/` | Custom parameter / method decorators |
+| `listeners/` | `@OnEvent()` listener classes (if split from the service) |
+
+Example (feature module with controller):
+```
+auth/
+├── auth.module.ts
+├── controllers/
+│   └── auth.controller.ts
+├── services/
+│   └── auth.service.ts
+├── decorators/
+│   └── current-user.decorator.ts
+└── dto/
+    ├── requests/
+    └── responses/
+```
+
 ## DTO Conventions
 
 **Entity modules** — DTOs live flat in `dto/` and describe the entity's operations:

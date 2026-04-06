@@ -9,7 +9,7 @@ export class SymbolEntity {
   name: string;
 
   @Prop({ required: true, default: false })
-  isPublished: boolean;
+  isPublic: boolean;
 
   @Prop({ required: true, min: 0 })
   price: number;

@@ -8,7 +8,7 @@ export class CreateSymbolDto {
 
   @ApiProperty({ example: false })
   @IsBoolean()
-  isPublished: boolean;
+  isPublic: boolean;
 
   @ApiProperty({ example: 42000.5 })
   @IsNumber()
