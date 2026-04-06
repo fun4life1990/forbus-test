@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
 import cookieParser from 'cookie-parser';
@@ -10,12 +11,14 @@ const port = process.env.PORT ?? 3000;
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
   app.set('query parser', 'extended');
 
   app.enableCors({ origin: true, credentials: true });
   app.use(cookieParser());
   app.useGlobalFilters(new BaseAppExceptionFilter(new Logger()));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useStaticAssets(join(process.cwd(), 'public'));
   setupSwagger(app);
 
   await app.listen(port);

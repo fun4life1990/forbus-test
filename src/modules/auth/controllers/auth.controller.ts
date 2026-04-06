@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Put,
   UseGuards,
@@ -28,6 +29,16 @@ import { CurrentUser } from '../decorators/current-user.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth('cookie-auth')
+  @ApiOperation({ summary: 'Get current authenticated user from access token' })
+  @ApiResponse({ status: 200, type: LoginResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  me(@CurrentUser() user: JwtUserPayloadDto): LoginResponseDto {
+    return { id: user.id, email: user.email, role: user.role };
+  }
 
   @Post('login')
   @UseGuards(PasswordAuthGuard)

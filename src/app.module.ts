@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -26,7 +24,7 @@ import { ClientModule } from './modules/client/client.module';
     SyncSymbolModule,
     ClientModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

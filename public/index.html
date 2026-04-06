@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forbus Test UI</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; font-size: 14px; }
+
+    /* Layout */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a1a2e; }
+    .login-card { background: #fff; border-radius: 12px; padding: 40px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,.3); }
+    .login-card h1 { text-align: center; margin-bottom: 6px; font-size: 1.6rem; color: #1a1a2e; }
+    .login-card .subtitle { text-align: center; color: #888; font-size: .85rem; margin-bottom: 28px; }
+
+    .header { display: flex; align-items: center; justify-content: space-between; background: #1a1a2e; color: #fff; padding: 12px 24px; }
+    .header h1 { font-size: 1.1rem; color: #fff; font-weight: 700; letter-spacing: .5px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .user-info { font-size: .85rem; color: #aaa; }
+    .user-info strong { color: #fff; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* Cards */
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 20px; margin-bottom: 16px; }
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; color: #1a1a2e; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid #e9ecef; margin-bottom: 20px; }
+    .tab { padding: 10px 22px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; color: #666; transition: color .15s; }
+    .tab:hover { color: #4361ee; }
+    .tab.active { border-color: #4361ee; color: #4361ee; }
+
+    /* Layout grid */
+    .row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 260px; }
+    .col-narrow { flex: 0 0 280px; }
+
+    /* Forms */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: .8rem; font-weight: 500; color: #555; margin-bottom: 4px; }
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"] {
+      width: 100%; border: 1px solid #dde1e7; border-radius: 6px; padding: 8px 10px;
+      font-size: .9rem; background: #fafafa; transition: border-color .15s;
+    }
+    input:focus { outline: none; border-color: #4361ee; background: #fff; }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; }
+    .checkbox-group input { width: auto; }
+    .checkbox-group label { margin: 0; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+           padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+           font-size: .85rem; font-weight: 500; transition: opacity .15s, transform .1s; }
+    .btn:hover { opacity: .88; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-full { width: 100%; }
+    .btn-primary   { background: #4361ee; color: #fff; }
+    .btn-success   { background: #2a9d8f; color: #fff; }
+    .btn-warning   { background: #f4a261; color: #fff; }
+    .btn-danger    { background: #e63946; color: #fff; }
+    .btn-secondary { background: #6c757d; color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: .8rem; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .72rem; font-weight: 600; }
+    .badge-blue  { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-gray  { background: #f3f4f6; color: #6b7280; }
+    .badge-red   { background: #fee2e2; color: #991b1b; }
+    .badge-orange{ background: #ffedd5; color: #9a3412; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 12px; background: #f8f9fa; border-bottom: 2px solid #e9ecef;
+         font-size: .75rem; color: #666; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafbff; }
+    code { font-family: 'SF Mono', monospace; font-size: .85em; background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+    .table-empty { padding: 32px; text-align: center; color: #aaa; }
+
+    /* WebSocket */
+    .ws-status { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .ws-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .ws-dot.on  { background: #2a9d8f; box-shadow: 0 0 6px #2a9d8f88; }
+    .ws-dot.off { background: #e63946; }
+    .ws-log { margin-top: 12px; max-height: 120px; overflow-y: auto; font-size: .72rem;
+              color: #666; background: #f8f9fa; border-radius: 6px; padding: 8px 10px; line-height: 1.6; }
+    .ws-log-entry { border-bottom: 1px solid #eee; padding: 1px 0; }
+
+    /* Price flash animation */
+    @keyframes flash { 0%,100% { background: inherit; } 50% { background: #fef9c3; } }
+    .price-flash td { animation: flash .5s; }
+
+    /* Profile info */
+    .profile-row { display: flex; justify-content: space-between; align-items: center;
+                   padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: .9rem; }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-row .label { color: #888; }
+    .profile-row .value { font-weight: 500; }
+
+    /* Misc */
+    .error-msg { color: #e63946; font-size: .82rem; margin-top: 6px; padding: 8px 10px; background: #fff0f0; border-radius: 6px; border: 1px solid #fecaca; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-header h2 { margin: 0; }
+    .mt-8  { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mb-12 { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════════════════════ LOGIN ══ -->
+  <div v-if="view === 'login'" class="login-wrap">
+    <div class="login-card">
+      <h1>Forbus</h1>
+      <p class="subtitle">Test UI — login to continue</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input v-model="loginForm.email" type="email" placeholder="admin@admin.com" @keyup.enter="login" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input v-model="loginForm.password" type="password" placeholder="••••••••" @keyup.enter="login" />
+      </div>
+      <div v-if="loginError" class="error-msg mb-12">{{ loginError }}</div>
+      <button class="btn btn-primary btn-full" @click="login" :disabled="loggingIn">
+        {{ loggingIn ? 'Logging in…' : 'Login' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ AUTHENTICATED SHELL ══ -->
+  <template v-else>
+    <div class="header">
+      <h1>Forbus Test UI</h1>
+      <div class="header-right">
+        <span class="user-info">
+          <strong>{{ currentUser.email }}</strong>
+          &nbsp;<span class="badge badge-blue">{{ currentUser.role }}</span>
+        </span>
+        <button class="btn btn-secondary btn-sm" @click="logout">Logout</button>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <!-- ═════════════════════════════════════════════════════ ADMIN ══ -->
+      <template v-if="view === 'admin'">
+        <div class="tabs">
+          <div class="tab" :class="{ active: adminTab === 'users' }"
+               @click="adminTab = 'users'; loadUsers()">Users</div>
+          <div class="tab" :class="{ active: adminTab === 'symbols' }"
+               @click="adminTab = 'symbols'; loadSymbols()">Symbols</div>
+        </div>
+
+        <!-- ─────────────────────────────────────── Users tab ── -->
+        <div v-if="adminTab === 'users'" class="row">
+          <div class="col-narrow">
+            <div class="card">
+              <h2>Create Client</h2>
+              <div class="form-group">
+                <label>Email</label>
+                <input v-model="createUserForm.email" type="email" placeholder="user@example.com" />
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input v-model="createUserForm.password" type="password" placeholder="••••••••" />
+              </div>
+              <div v-if="userFormError" class="error-msg mb-12">{{ userFormError }}</div>
+              <button class="btn btn-primary btn-full" @click="createUser">Create User</button>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card">
+              <div class="section-header">
+                <h2>Client Users ({{ users.length }})</h2>
+                <button class="btn btn-secondary btn-sm" @click="loadUsers">Refresh</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="usersLoading">
+                    <td colspan="3" class="table-empty">Loading…</td>
+                  </tr>
+                  <tr v-else-if="users.length === 0">
+                    <td colspan="3" class="table-empty">No client users yet</td>
+                  </tr>
+                  <tr v-for="u in users" :key="u.id">
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge badge-green">{{ u.role }}</span></td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-warning btn-sm" @click="disconnectUser(u.id)"
+                                title="Force disconnect WebSocket session">Disconnect WS</button>
+                        <button class="btn btn-danger btn-sm" @click="deleteUser(u.id)">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─────────────────────────────────────── Symbols tab ── -->
+        <div v-if="adminTab === 'symbols'" class="row">
+          <div class="col-narrow">
+            <div class="card">
+              <h2>{{ editingSymbol ? 'Edit Symbol' : 'Create Symbol' }}</h2>
+              <div class="form-group">
+                <label>Name</label>
+                <input v-model="symbolForm.name" type="text" placeholder="Bitcoin" />
+              </div>
+              <div class="form-group">
+                <label>Provider Symbol (Binance)</label>
+                <input v-model="symbolForm.providerSymbol" type="text" placeholder="BTCUSDT" />
+              </div>
+              <div class="form-group">
+                <label>Price (initial)</label>
+                <input v-model.number="symbolForm.price" type="number" min="0" step="0.0001" placeholder="0" />
+              </div>
+              <div class="form-group checkbox-group">
+                <input v-model="symbolForm.isPublic" type="checkbox" id="isPublic" />
+                <label for="isPublic">Is Public</label>
+              </div>
+              <div v-if="symbolFormError" class="error-msg mb-12">{{ symbolFormError }}</div>
+              <div class="btn-group">
+                <button class="btn btn-primary" @click="editingSymbol ? updateSymbol() : createSymbol()">
+                  {{ editingSymbol ? 'Save Changes' : 'Create Symbol' }}
+                </button>
+                <button v-if="editingSymbol" class="btn btn-secondary" @click="cancelEdit">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card">
+              <div class="section-header">
+                <h2>Symbols ({{ symbolsMeta.total }})</h2>
+                <button class="btn btn-secondary btn-sm" @click="loadSymbols">Refresh</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Provider Symbol</th>
+                    <th>Price</th>
+                    <th>Public</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="symbolsLoading">
+                    <td colspan="5" class="table-empty">Loading…</td>
+                  </tr>
+                  <tr v-else-if="symbols.length === 0">
+                    <td colspan="5" class="table-empty">No symbols yet</td>
+                  </tr>
+                  <tr v-for="s in symbols" :key="s.id">
+                    <td><strong>{{ s.name }}</strong></td>
+                    <td><code>{{ s.providerSymbol }}</code></td>
+                    <td>{{ s.price }}</td>
+                    <td>
+                      <span class="badge" :class="s.isPublic ? 'badge-green' : 'badge-gray'">
+                        {{ s.isPublic ? 'Yes' : 'No' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group">
+                        <button class="btn btn-warning btn-sm" @click="startEdit(s)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @click="deleteSymbol(s.id)">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <!-- Pagination -->
+              <div v-if="symbolsMeta.totalPages > 1"
+                   style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:12px;">
+                <button class="btn btn-secondary btn-sm"
+                        :disabled="symbolsMeta.page <= 1"
+                        @click="symbolsMeta.page--; loadSymbols()">← Prev</button>
+                <span style="font-size:.82rem; color:#666;">
+                  Page {{ symbolsMeta.page }} / {{ symbolsMeta.totalPages }}
+                </span>
+                <button class="btn btn-secondary btn-sm"
+                        :disabled="symbolsMeta.page >= symbolsMeta.totalPages"
+                        @click="symbolsMeta.page++; loadSymbols()">Next →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ═════════════════════════════════════════════════════ CLIENT ══ -->
+      <template v-if="view === 'client'">
+        <div class="row">
+          <!-- Left: Profile + WS controls -->
+          <div class="col-narrow">
+            <div class="card">
+              <h2>Profile</h2>
+              <div class="profile-row">
+                <span class="label">Email</span>
+                <span class="value">{{ clientProfile.email || '…' }}</span>
+              </div>
+              <div class="profile-row">
+                <span class="label">Role</span>
+                <span class="badge badge-blue">{{ clientProfile.role || '…' }}</span>
+              </div>
+              <div class="profile-row">
+                <span class="label">Member since</span>
+                <span class="value" style="font-size:.8rem">{{ formatDate(clientProfile.createdAt) }}</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>WebSocket</h2>
+              <div class="ws-status">
+                <div class="ws-dot" :class="isConnected ? 'on' : 'off'"></div>
+                <span>{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
+                <span v-if="isSubscribed" class="badge badge-green">Subscribed</span>
+              </div>
+
+              <div class="btn-group" style="flex-direction:column;">
+                <template v-if="!isConnected">
+                  <button class="btn btn-primary" @click="connectSocket">Connect</button>
+                </template>
+                <template v-else>
+                  <button v-if="!isSubscribed" class="btn btn-success" @click="subscribeToUpdates">
+                    Subscribe to prices
+                  </button>
+                  <button v-else class="btn btn-warning" @click="unsubscribeFromUpdates">
+                    Unsubscribe
+                  </button>
+                  <button class="btn btn-danger" @click="disconnectSocket">Disconnect</button>
+                </template>
+              </div>
+
+              <div v-if="wsError" class="error-msg mt-8">{{ wsError }}</div>
+
+              <div v-if="wsLog.length" class="ws-log">
+                <div v-for="(entry, i) in wsLog" :key="i" class="ws-log-entry">{{ entry }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live prices table -->
+          <div class="col">
+            <div class="card">
+              <div class="section-header">
+                <h2>Live Prices</h2>
+                <span class="badge badge-gray">{{ prices.length }} symbols</span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Close</th>
+                    <th>Open</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="prices.length === 0">
+                    <td colspan="6" class="table-empty">
+                      {{ isSubscribed ? 'Waiting for updates from Binance…' : 'Connect and subscribe to see live prices' }}
+                    </td>
+                  </tr>
+                  <tr v-for="p in prices" :key="p.s" :class="{ 'price-flash': p._flash }">
+                    <td><strong>{{ p.s }}</strong></td>
+                    <td>{{ p.c }}</td>
+                    <td>{{ p.o }}</td>
+                    <td>{{ p.h }}</td>
+                    <td>{{ p.l }}</td>
+                    <td style="font-size:.75rem; color:#aaa">{{ formatTime(p.E) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </template>
+
+    </div><!-- /container -->
+  </template>
+
+</div><!-- /app -->
+
+<script>
+  const { createApp, ref, reactive, onMounted } = Vue;
+
+  createApp({
+    setup() {
+      // ─── global state ─────────────────────────────────────────────────
+      const view = ref('login');                           // 'login' | 'admin' | 'client'
+      const currentUser = reactive({ id: '', email: '', role: '' });
+
+      // ─── login ────────────────────────────────────────────────────────
+      const loginForm   = reactive({ email: 'admin@admin.com', password: '' });
+      const loginError  = ref('');
+      const loggingIn   = ref(false);
+
+      // ─── admin: users ─────────────────────────────────────────────────
+      const adminTab        = ref('users');
+      const users           = ref([]);
+      const usersLoading    = ref(false);
+      const userFormError   = ref('');
+      const createUserForm  = reactive({ email: '', password: '' });
+
+      // ─── admin: symbols ───────────────────────────────────────────────
+      const symbols         = ref([]);
+      const symbolsLoading  = ref(false);
+      const symbolFormError = ref('');
+      const symbolsMeta     = reactive({ page: 1, limit: 20, total: 0, totalPages: 1 });
+      const symbolForm      = reactive({ name: '', providerSymbol: '', price: 0, isPublic: false });
+      const editingSymbol   = ref(null);
+
+      // ─── client ───────────────────────────────────────────────────────
+      const clientProfile = reactive({ id: '', email: '', role: '', createdAt: null });
+      const isConnected   = ref(false);
+      const isSubscribed  = ref(false);
+      const prices        = ref([]);
+      const wsError       = ref('');
+      const wsLog         = ref([]);
+      let socket          = null;
+
+      // ─── helpers ──────────────────────────────────────────────────────
+      function formatDate(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleString();
+      }
+      function formatTime(ms) {
+        if (!ms) return '—';
+        return new Date(ms).toLocaleTimeString();
+      }
+      function wsLogPush(msg) {
+        const ts = new Date().toLocaleTimeString();
+        wsLog.value.unshift(`[${ts}] ${msg}`);
+        if (wsLog.value.length > 60) wsLog.value.pop();
+      }
+
+      async function apiFetch(path, opts = {}) {
+        const res = await fetch(path, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          ...opts,
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ message: res.statusText }));
+          throw new Error(body.message || res.statusText);
+        }
+        if (res.status === 204) return null;
+        return res.json();
+      }
+
+      // ─── auth ─────────────────────────────────────────────────────────
+      async function login() {
+        loginError.value = '';
+        loggingIn.value  = true;
+        try {
+          const data = await apiFetch('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email: loginForm.email, password: loginForm.password }),
+          });
+          currentUser.id    = data.id;
+          currentUser.email = data.email;
+          currentUser.role  = data.role;
+          if (data.role === 'Admin') {
+            view.value = 'admin';
+            loadUsers();
+          } else {
+            view.value = 'client';
+            loadClientProfile();
+          }
+        } catch (e) {
+          loginError.value = e.message;
+        } finally {
+          loggingIn.value = false;
+        }
+      }
+
+      async function logout() {
+        disconnectSocket();
+        try { await apiFetch('/auth/logout', { method: 'PUT' }); } catch (_) {}
+        view.value = 'login';
+        currentUser.id = currentUser.email = currentUser.role = '';
+        loginForm.password = '';
+      }
+
+      // ─── admin: users ─────────────────────────────────────────────────
+      async function loadUsers() {
+        usersLoading.value = true;
+        try { users.value = await apiFetch('/client'); }
+        catch (e) { console.error(e); }
+        finally { usersLoading.value = false; }
+      }
+
+      async function createUser() {
+        userFormError.value = '';
+        try {
+          await apiFetch('/client', {
+            method: 'POST',
+            body: JSON.stringify({ email: createUserForm.email, password: createUserForm.password }),
+          });
+          createUserForm.email = createUserForm.password = '';
+          await loadUsers();
+        } catch (e) { userFormError.value = e.message; }
+      }
+
+      async function deleteUser(id) {
+        if (!confirm('Delete this user? This cannot be undone.')) return;
+        try {
+          await apiFetch(`/client/${id}`, { method: 'DELETE' });
+          await loadUsers();
+        } catch (e) { alert(e.message); }
+      }
+
+      async function disconnectUser(id) {
+        try {
+          await apiFetch(`/client/${id}/disconnect`, { method: 'POST' });
+          alert('Disconnect signal sent to client.');
+        } catch (e) { alert(e.message); }
+      }
+
+      // ─── admin: symbols ───────────────────────────────────────────────
+      async function loadSymbols() {
+        symbolsLoading.value = true;
+        try {
+          const data = await apiFetch(`/symbol?page=${symbolsMeta.page}&limit=${symbolsMeta.limit}`);
+          symbols.value          = data.data;
+          symbolsMeta.total      = data.meta.total;
+          symbolsMeta.totalPages = data.meta.totalPages;
+        } catch (e) { console.error(e); }
+        finally { symbolsLoading.value = false; }
+      }
+
+      function startEdit(s) {
+        editingSymbol.value        = s;
+        symbolForm.name            = s.name;
+        symbolForm.providerSymbol  = s.providerSymbol;
+        symbolForm.price           = s.price;
+        symbolForm.isPublic        = s.isPublic;
+        symbolFormError.value      = '';
+      }
+
+      function cancelEdit() {
+        editingSymbol.value       = null;
+        symbolForm.name           = '';
+        symbolForm.providerSymbol = '';
+        symbolForm.price          = 0;
+        symbolForm.isPublic       = false;
+        symbolFormError.value     = '';
+      }
+
+      async function createSymbol() {
+        symbolFormError.value = '';
+        try {
+          await apiFetch('/symbol', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: symbolForm.name,
+              providerSymbol: symbolForm.providerSymbol,
+              price: symbolForm.price,
+              isPublic: symbolForm.isPublic,
+            }),
+          });
+          cancelEdit();
+          await loadSymbols();
+        } catch (e) { symbolFormError.value = e.message; }
+      }
+
+      async function updateSymbol() {
+        symbolFormError.value = '';
+        try {
+          await apiFetch(`/symbol/${editingSymbol.value.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: symbolForm.name,
+              providerSymbol: symbolForm.providerSymbol,
+              price: symbolForm.price,
+              isPublic: symbolForm.isPublic,
+            }),
+          });
+          cancelEdit();
+          await loadSymbols();
+        } catch (e) { symbolFormError.value = e.message; }
+      }
+
+      async function deleteSymbol(id) {
+        if (!confirm('Delete this symbol?')) return;
+        try {
+          await apiFetch(`/symbol/${id}`, { method: 'DELETE' });
+          await loadSymbols();
+        } catch (e) { alert(e.message); }
+      }
+
+      // ─── client: profile + websocket ─────────────────────────────────
+      async function loadClientProfile() {
+        try {
+          const data = await apiFetch('/client/me');
+          Object.assign(clientProfile, data);
+        } catch (e) { console.error(e); }
+      }
+
+      function connectSocket() {
+        wsError.value = '';
+        wsLogPush('Connecting…');
+        socket = io({ withCredentials: true, transports: ['websocket', 'polling'] });
+
+        socket.on('connect', () => {
+          isConnected.value = true;
+          wsLogPush(`Connected — id: ${socket.id}`);
+        });
+
+        socket.on('disconnect', (reason) => {
+          isConnected.value  = false;
+          isSubscribed.value = false;
+          wsLogPush(`Disconnected: ${reason}`);
+          socket = null;
+        });
+
+        socket.on('connect_error', (err) => {
+          wsError.value = err.message;
+          wsLogPush(`Connection error: ${err.message}`);
+        });
+
+        socket.on('priceUpdate', (tickers) => {
+          wsLogPush(`priceUpdate — ${tickers.length} ticker(s)`);
+          // Build index by symbol for fast lookup
+          const idx = {};
+          prices.value.forEach((p, i) => { idx[p.s] = i; });
+          tickers.forEach((t) => {
+            if (idx[t.s] !== undefined) {
+              const row = prices.value[idx[t.s]];
+              Object.assign(row, t);
+              row._flash = true;
+              setTimeout(() => { row._flash = false; }, 600);
+            } else {
+              prices.value.push({ ...t, _flash: false });
+              idx[t.s] = prices.value.length - 1;
+            }
+          });
+          prices.value.sort((a, b) => a.s.localeCompare(b.s));
+        });
+      }
+
+      function subscribeToUpdates() {
+        if (!socket) return;
+        socket.emit('subscribe');
+        isSubscribed.value = true;
+        wsLogPush('Emitted: subscribe → joined "price-updates" room');
+      }
+
+      function unsubscribeFromUpdates() {
+        if (!socket) return;
+        socket.emit('unsubscribe');
+        isSubscribed.value = false;
+        prices.value       = [];
+        wsLogPush('Emitted: unsubscribe → left "price-updates" room');
+      }
+
+      function disconnectSocket() {
+        if (socket) { socket.disconnect(); socket = null; }
+        isConnected.value  = false;
+        isSubscribed.value = false;
+        prices.value       = [];
+      }
+
+      // ─── restore session on page load ────────────────────────────────
+      onMounted(async () => {
+        try {
+          const data = await apiFetch('/auth/me');
+          currentUser.id    = data.id;
+          currentUser.email = data.email;
+          currentUser.role  = data.role;
+          if (data.role === 'Admin') {
+            view.value = 'admin';
+            loadUsers();
+          } else {
+            view.value = 'client';
+            loadClientProfile();
+          }
+        } catch (_) {
+          // no valid session — stay on login form
+        }
+      });
+
+      // ─── expose to template ───────────────────────────────────────────
+      return {
+        view, currentUser, loginForm, loginError, loggingIn,
+        adminTab, users, usersLoading, userFormError, createUserForm,
+        symbols, symbolsLoading, symbolFormError, symbolsMeta, symbolForm, editingSymbol,
+        clientProfile, isConnected, isSubscribed, prices, wsError, wsLog,
+        login, logout,
+        loadUsers, createUser, deleteUser, disconnectUser,
+        loadSymbols, startEdit, cancelEdit, createSymbol, updateSymbol, deleteSymbol,
+        loadClientProfile, connectSocket, subscribeToUpdates, unsubscribeFromUpdates, disconnectSocket,
+        formatDate, formatTime,
+      };
+    },
+  }).mount('#app');
+</script>
+</body>
+</html>
