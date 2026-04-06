@@ -16,7 +16,7 @@ export class SymbolManagementService {
     filter: FilterSymbolsDto,
     user: JwtUserPayloadDto,
   ): Promise<GetAllSymbolsResponseDto> {
-    if (user.role !== UserRole.Admin) {
+    if ((user.role as UserRole) !== UserRole.Admin) {
       filter.isPublished = true;
     }
     return this.symbolService.findAll(filter);
@@ -24,7 +24,9 @@ export class SymbolManagementService {
 
   findById(id: string, user: JwtUserPayloadDto): Promise<SymbolDocument> {
     const filter =
-      user.role !== UserRole.Admin ? { isPublished: true } : undefined;
+      (user.role as UserRole) !== UserRole.Admin
+        ? { isPublished: true }
+        : undefined;
     return this.symbolService.findById(id, filter);
   }
 

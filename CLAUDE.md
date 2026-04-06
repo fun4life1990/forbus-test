@@ -7,19 +7,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **All commands must be run inside the Docker container via `docker compose exec` or `docker compose run --rm`, never directly on the host.**
 
 ```bash
-docker compose exec app npm run start:dev        # dev server with watch
-docker compose exec app npm run build            # production build
-docker compose exec app npm run lint:check       # ESLint (no auto-fix, max-warnings=0)
-docker compose exec app npm run lint             # ESLint with auto-fix
-docker compose exec app npm run format:check     # Prettier check
-docker compose exec app npm run format           # Prettier auto-fix
-docker compose exec app npm run test             # Jest unit tests
-docker compose exec app npm run test:watch       # Jest watch mode
-docker compose exec app npm run test:cov         # Jest with coverage
-docker compose exec app npm run test:e2e         # E2E tests (test/jest-e2e.json)
+docker compose exec api npm run start:dev        # dev server with watch
+docker compose exec api npm run build            # production build
+docker compose exec api npm run lint:check       # ESLint (no auto-fix, max-warnings=0)
+docker compose exec api npm run lint             # ESLint with auto-fix
+docker compose exec api npm run format:check     # Prettier check
+docker compose exec api npm run format           # Prettier auto-fix
+docker compose exec api npm run test             # Jest unit tests
+docker compose exec api npm run test:watch       # Jest watch mode
+docker compose exec api npm run test:cov         # Jest with coverage
+docker compose exec api npm run test:e2e         # E2E tests (test/jest-e2e.json)
 ```
 
-TypeScript type-check without building: `docker compose exec app npx tsc --noEmit`
+TypeScript type-check without building: `docker compose exec api npx tsc --noEmit`
 
 Swagger UI is available at `/api/docs` only when `NODE_ENV` is `local` or `dev`.
 
@@ -107,7 +107,7 @@ JWT `expiresIn` values follow `SignOptions['expiresIn']` format — plain second
 
 A standalone NestJS CLI app (`src/seeder.ts`) using `nest-commander`. Run with:
 ```bash
-docker compose exec app npx ts-node -r tsconfig-paths/register src/seeder.ts seed:users
+docker compose exec api npx ts-node -r tsconfig-paths/register src/seeder.ts seed:users
 ```
 Seeds the default admin user (`admin@admin.com`). Add new seed commands in `src/modules/user-seed/`.
 

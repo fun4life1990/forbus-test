@@ -65,9 +65,13 @@ export class SymbolService {
   async create(dto: CreateSymbolDto): Promise<SymbolDocument> {
     try {
       return await new this.symbolModel(dto).save();
-    } catch (err) {
-      if (err?.code === 11000) {
-        throw new ConflictError(this.buildDuplicateMessage(err));
+    } catch (err: unknown) {
+      const mongoErr = err as {
+        code?: number;
+        keyValue?: Record<string, unknown>;
+      };
+      if (mongoErr.code === 11000) {
+        throw new ConflictError(this.buildDuplicateMessage(mongoErr));
       }
       throw err;
     }
@@ -82,9 +86,13 @@ export class SymbolService {
       symbol = await this.symbolModel
         .findByIdAndUpdate(id, dto, { new: true })
         .exec();
-    } catch (err) {
-      if (err?.code === 11000) {
-        throw new ConflictError(this.buildDuplicateMessage(err));
+    } catch (err: unknown) {
+      const mongoErr = err as {
+        code?: number;
+        keyValue?: Record<string, unknown>;
+      };
+      if (mongoErr.code === 11000) {
+        throw new ConflictError(this.buildDuplicateMessage(mongoErr));
       }
       throw err;
     }

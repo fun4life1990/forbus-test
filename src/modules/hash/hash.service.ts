@@ -10,7 +10,7 @@ export class HashService {
       throw new Error('hashing data should be shorter');
     }
 
-    return bcrypt.hash(data, saltOrRounds);
+    return await bcrypt.hash(data, saltOrRounds);
   }
 
   async compareHashed(input: string, hash: string): Promise<boolean> {
@@ -18,6 +18,6 @@ export class HashService {
       throw new Error('hashing data should be shorter');
     }
 
-    return bcrypt.compare(input, hash);
+    return await bcrypt.compare(input, hash);
   }
 }

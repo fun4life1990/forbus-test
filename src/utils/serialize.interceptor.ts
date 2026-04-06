@@ -6,30 +6,31 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { plainToInstance } from 'class-transformer';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 
-interface ClassConstructor {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  new (...args: any[]): {};
-}
-
-export function Serialize(dto: ClassConstructor) {
+export function Serialize(dto: ClassConstructor<unknown>) {
   return UseInterceptors(new SerializeInterceptor(dto));
 }
 
 export class SerializeInterceptor implements NestInterceptor {
-  constructor(private dto: any) {}
+  constructor(private dto: ClassConstructor<unknown>) {}
 
-  intercept(context: ExecutionContext, handler: CallHandler): Observable<any> {
+  intercept(
+    context: ExecutionContext,
+    handler: CallHandler,
+  ): Observable<unknown> {
     return handler.handle().pipe(
-      map((data: any) => {
+      map((data: unknown) => {
         return transform(this.dto, data);
       }),
     );
   }
 }
 
-export function transform(cls, data) {
+export function transform(
+  cls: ClassConstructor<unknown>,
+  data: unknown,
+): unknown {
   return plainToInstance(cls, data, {
     excludeExtraneousValues: true,
   });

@@ -20,7 +20,8 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => req?.cookies?.[REFRESH_TOKEN_COOKIE] ?? null,
+        (req: Request): string | null =>
+          (req.cookies[REFRESH_TOKEN_COOKIE] as string | undefined) ?? null,
       ]),
       secretOrKey: secretKey,
       passReqToCallback: true,

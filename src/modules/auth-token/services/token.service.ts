@@ -8,7 +8,7 @@ import { JwtUserPayloadDto } from '../dto/jwt-user-payload.dto';
 import { ResponseTokenDto } from '../dto/response-token.dto';
 import { JwtPayloadDto } from '../dto/jwt-payload.dto';
 import { ForbiddenError } from '../../../error/forbidden.error';
-import { User, UserDocument } from '../../user/schemas/user.schema';
+import { UserDocument } from '../../user/schemas/user.schema';
 import { SignOptions } from 'jsonwebtoken';
 
 @Injectable()
@@ -77,8 +77,8 @@ export class TokenService {
         secret,
         expiresIn: expiresIn as SignOptions['expiresIn'],
       });
-    } catch (e) {
-      throw new Error(e.message);
+    } catch (e: unknown) {
+      throw new Error((e as Error).message);
     }
   }
 

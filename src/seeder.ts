@@ -18,4 +18,4 @@ async function bootstrap() {
   await CommandFactory.run(SeederModule, { logger: new Logger() });
 }
 
-bootstrap();
+void bootstrap();

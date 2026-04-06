@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
 import cookieParser from 'cookie-parser';
@@ -8,7 +9,8 @@ import { BaseAppExceptionFilter } from './error/base-app-exception.filter';
 const port = process.env.PORT ?? 3000;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.set('query parser', 'extended');
 
   app.use(cookieParser());
   app.useGlobalFilters(new BaseAppExceptionFilter(new Logger()));
